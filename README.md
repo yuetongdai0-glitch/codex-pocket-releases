@@ -15,7 +15,7 @@
 | Windows 控制端       | 最新发行中的 `Codex-Pocket-Windows-x64-版本.zip`                                                                                          |
 | 被控制的 Mac/Windows | [npm 官方包 codex-pocket-agent](https://www.npmjs.com/package/codex-pocket-agent)                                                         |
 | 浏览器               | 打开管理员提供的 HTTPS 服务器地址，无需额外安装                                                                                           |
-| Linux 服务器         | 最新发行的对应架构 Relay 镜像归档、部署文件和 `SHA256SUMS`                                                                                |
+| Linux 服务器         | 最新发行的四个部署文件；归档升级或网络无法拉取镜像时额外下载对应架构 Relay 镜像归档和 `SHA256SUMS`                                        |
 
 详细文档：[完整使用流程与命令](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/PUBLIC-USAGE.md)、[Word 使用说明](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/Codex-Pocket-User-Guide.docx)、[服务器部署说明](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/DEPLOYMENT.md)。
 
@@ -84,14 +84,12 @@ codex-pocket-agent pair --server https://second.example.com
 
 Linux 安装 Docker Engine 和 Compose，开启 Docker 开机启动，开放安全组及防火墙 TCP 80/443。域名解析到自己的服务器；直接使用公网 IPv4 也可。大陆域名访问需要满足接入商备案要求。
 
-从同一正式 Release 下载以下文件并放入同一目录：
+0.2.2 已验证 GHCR 的 amd64/arm64 双架构匿名拉取。首次部署只需从同一正式 Release 下载以下四个文件并放入同一目录：
 
 - [compose.yaml](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/compose.yaml)
 - [Caddyfile](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/Caddyfile)
 - [setup.sh](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/setup.sh)
 - [default.env.example](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/default.env.example)
-- [SHA256SUMS](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/SHA256SUMS)
-- 对应架构镜像归档：Intel/AMD 选 `Codex-Pocket-Relay-linux-amd64-版本.tar.gz`，ARM 选 `Codex-Pocket-Relay-linux-arm64-版本.tar.gz`。
 
 执行：
 
@@ -102,13 +100,15 @@ docker compose logs --tail 100 gateway
 docker compose exec relay node dist/relay/index.mjs create-invite --hours 24
 ```
 
-已下载匹配归档时，在镜像提示直接回车。脚本校验 SHA256 后导入并启动，不需要注册表账号；网关 Caddy 镜像仍需能从 Docker Hub 下载。服务器地址输入自己的公网 IPv4 或域名，不带协议、路径和端口，再填写证书联系邮箱。公开文件使用 `default.env.example`，脚本同时兼容已有本地 `.env.example`。
+在镜像提示直接回车，使用 `ghcr.io/yuetongdai0-glitch/codex-pocket:0.2.2` 自动拉取，不需要注册表账号；也可先执行 `docker pull ghcr.io/yuetongdai0-glitch/codex-pocket:0.2.2`。网关 Caddy 镜像仍需能从 Docker Hub 下载。服务器地址输入自己的公网 IPv4 或域名，不带协议、路径和端口，再填写证书联系邮箱。公开文件使用 `default.env.example`，脚本同时兼容已有本地 `.env.example`。
+
+网络无法拉取 GHCR 时，额外下载 [SHA256SUMS](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/SHA256SUMS) 和对应架构归档：Intel/AMD 选 `Codex-Pocket-Relay-linux-amd64-版本.tar.gz`，ARM 选 `Codex-Pocket-Relay-linux-arm64-版本.tar.gz`。脚本在镜像提示回车时校验摘要后导入归档，无需注册表账号。
 
 网关和 HTTPS 配置已随部署包提供，无需另写 Nginx。真实生产证书必须受设备信任；保持 TCP 80 可达供签发续期，不关闭 TLS 校验。Relay 后端通过认证 WSS 转发已授权手机操作，8080 仅容器内部可见。
 
 电脑注册邀请默认 1 小时一次使用；`--hours 24` 可供次日安装，`--hours` 只接受 1-168 的整数小时。每台新电脑分别生成，通过可信渠道私下交付；过期重新生成，不能把邀请或配对码放入公共 README。
 
-默认推荐公开镜像归档。只有该次发行 [REGISTRY-STATUS.txt](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/REGISTRY-STATUS.txt) 明确证明 GHCR 对 amd64/arm64 匿名拉取成功时，才使用其中已验证的镜像名称与固定版本执行 `docker pull` 或配置 `.env` 后 `docker compose pull`。没有这个证明，使用归档；注册表权限不足不能靠跳过鉴权解决。
+0.2.2 的 [REGISTRY-STATUS.txt](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/REGISTRY-STATUS.txt) 已记录 GHCR 双架构匿名拉取成功。未来版本仍先核对对应报告，再使用其中已验证的镜像名称与固定版本；没有这个证明，使用归档，注册表权限不足不能靠跳过鉴权解决。
 
 详细服务器配置见 [DEPLOYMENT.md](https://github.com/yuetongdai0-glitch/codex-pocket-releases/releases/latest/download/DEPLOYMENT.md)。
 
@@ -129,7 +129,7 @@ codex-pocket-agent service install
 codex-pocket-agent status
 ```
 
-服务器升级前备份数据卷，在原目录下载新版对应架构归档、摘要与部署文件，执行 `sh setup.sh --upgrade`。保留 `.env`、`relay-data`、`gateway-data` 和 `gateway-config`；不要执行 `docker compose down -v`。电脑和服务器恢复网络后重新同步，不重新配对。
+服务器升级前备份数据卷，在原目录下载新版对应架构归档、摘要与部署文件，执行 `sh setup.sh --upgrade`。当前升级脚本仍必须使用归档，不能只下载首次安装的四个文件。保留 `.env`、`relay-data`、`gateway-data` 和 `gateway-config`；不要执行 `docker compose down -v`。电脑和服务器恢复网络后重新同步，不重新配对。
 
 已打开工作台临时断网可看已读缓存，不能离线执行或审批；完全断网冷启动不能保证加载在线网页。手机掉线不会自动停止电脑正在执行的任务。
 
